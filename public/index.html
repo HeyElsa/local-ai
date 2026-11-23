@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Local AI</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/vendor/katex/dist/katex.min.css">
+  <link rel="stylesheet" href="/vendor/@fontsource-variable/jetbrains-mono/wght.css">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/theme.js"></script>
+</head>
+<body>
+  <div id="lock" hidden>
+    <form id="lock-form">
+      <div class="brand brand-lock"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="mark-field" width="32" height="32"/><path class="mark-ink" d="M8 7h5v13h11v5H8z"/><path class="mark-ink mark-spark" d="M22 2.5Q23.5 8.5 29.5 10Q23.5 11.5 22 17.5Q20.5 11.5 14.5 10Q20.5 8.5 22 2.5Z"/></svg><span>Local AI</span></div>
+      <h1 id="lock-title">Locked.</h1>
+      <div id="setup-fields" hidden>
+        <p class="lock-lead">Nothing can use this app without it, including other programs and other accounts on this computer. It also encrypts your chats and files. If you forget it, they can’t be recovered.</p>
+        <label for="setup-code">Setup code, shown in the terminal where you started the app</label>
+        <input id="setup-code" class="lock-field" type="text" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX">
+      </div>
+      <label for="lock-input" id="lock-label">Passcode</label>
+      <input id="lock-input" class="lock-field" type="password" autocomplete="current-password" spellcheck="false">
+      <div id="setup-more" hidden>
+        <label for="setup-repeat">Repeat passcode</label>
+        <input id="setup-repeat" class="lock-field" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" spellcheck="false">
+        <label class="lock-check"><input id="setup-understand" type="checkbox"> I understand that if I forget this passcode, my chats and files can’t be recovered.</label>
+      </div>
+      <p id="lock-note" role="status"></p>
+      <button type="submit" id="lock-submit">Unlock</button>
+    </form>
+  </div>
+
+  <aside id="sidebar" aria-label="Chats">
+    <div class="brand"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="mark-field" width="32" height="32"/><path class="mark-ink" d="M8 7h5v13h11v5H8z"/><path class="mark-ink mark-spark" d="M22 2.5Q23.5 8.5 29.5 10Q23.5 11.5 22 17.5Q20.5 11.5 14.5 10Q20.5 8.5 22 2.5Z"/></svg><span>Local AI</span></div>
+    <button id="new-chat" class="side-action">New chat</button>
+    <button id="temp-chat" class="side-action side-minor">Temporary chat</button>
+    <input id="chat-filter" type="search" placeholder="Find a chat" aria-label="Find a chat">
+    <nav id="chat-list"></nav>
+    <button id="clear-chats" class="side-clear" title="Deletes every saved chat and its files from this computer" hidden>Delete all chats</button>
+    <button id="private-toggle" class="side-private" role="switch" aria-checked="false" title="When on, nothing can leave this computer">
+      <span>Private mode</span><span class="switch" aria-hidden="true"></span>
+    </button>
+    <div class="side-foot">
+      <span id="balance"></span>
+      <button id="lock-now" class="quiet">Lock</button>
+      <button id="open-guide" class="quiet">How it works</button>
+      <button id="open-settings" class="quiet">Settings</button>
+    </div>
+  </aside>
+  <div id="scrim"></div>
+
+  <main id="main">
+    <button id="toggle-sidebar" class="quiet" aria-expanded="false" aria-controls="sidebar">Chats</button>
+    <div id="scroller">
+      <div id="thread"></div>
+    </div>
+
+    <form id="composer" autocomplete="off">
+      <div id="voice-panel" role="group" aria-label="Voice recording" hidden>
+        <div class="voice-top">
+          <canvas id="voice-wave" aria-hidden="true"></canvas>
+          <span id="voice-time">0:00</span>
+        </div>
+        <div class="voice-bottom">
+          <p id="voice-status" role="status"></p>
+          <select id="voice-mic" aria-label="Microphone" hidden></select>
+          <button type="button" id="voice-cancel" class="quiet">Cancel</button>
+          <button type="button" id="voice-retry" class="quiet" hidden></button>
+          <button type="button" id="voice-done">Stop and ask</button>
+        </div>
+      </div>
+      <div id="attachments"></div>
+      <textarea id="input" rows="1" placeholder="Type your question" aria-label="Your message" aria-describedby="destination"></textarea>
+      <div class="composer-row">
+        <button type="button" id="attach" class="icon-button" aria-label="Attach images or videos" title="Attach images or videos">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M20 11.5 12 19.5a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L9.7 17.2a1.6 1.6 0 0 1-2.3-2.3l7.6-7.6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button type="button" id="web" class="icon-button" aria-pressed="true" aria-label="Web search on">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 4 6 4 9s-1 6-4 9c-3-3-4-6-4-9s1-6 4-9Z"/></g></svg>
+        </button>
+        <div class="modes" role="radiogroup" aria-label="What to make">
+          <button type="button" role="radio" data-mode="chat" aria-checked="true">Ask</button>
+          <button type="button" role="radio" data-mode="image" aria-checked="false">Image</button>
+          <button type="button" role="radio" data-mode="video" aria-checked="false">Video</button>
+        </div>
+        <span id="video-options">
+          <select id="video-seconds" aria-label="Video length"></select>
+          <select id="video-size" aria-label="Video size"></select>
+        </span>
+        <span class="row-spacer"></span>
+        <span id="estimate"></span>
+        <button type="button" id="model" class="quiet"><span id="model-name"></span><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></button>
+        <button type="button" id="mic" class="icon-button" aria-label="Ask by voice" title="Ask by voice">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8.5" y="2.5" width="7" height="12.5" rx="3.5" fill="currentColor"/><path d="M5 11.5a7 7 0 0 0 14 0M12 18.5v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button type="submit" id="send" aria-label="Ask"></button>
+      </div>
+      <p id="composer-note" role="status"></p>
+      <p id="destination"></p>
+      <input id="file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple hidden>
+    </form>
+  </main>
+
+  <dialog id="guide" aria-labelledby="guide-title">
+    <div class="brand guide-brand"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="mark-field" width="32" height="32"/><path class="mark-ink" d="M8 7h5v13h11v5H8z"/><path class="mark-ink mark-spark" d="M22 2.5Q23.5 8.5 29.5 10Q23.5 11.5 22 17.5Q20.5 11.5 14.5 10Q20.5 8.5 22 2.5Z"/></svg><span>Local AI</span></div>
+    <h2 id="guide-title">How Local AI works</h2>
+    <p class="guide-lead">A private chat app that runs on your computer. You ask a question, and a model answers in plain language, adding charts, timelines, diagrams, steps and key numbers when they explain something better than words. Your chats and files stay on this computer. The model that answers is either one on this computer, or a cloud model from a provider you have a key for.</p>
+
+    <h3>What you need to do</h3>
+    <ol class="guide-steps">
+      <li>
+        <div class="guide-step-head"><strong>Add a provider key</strong><span class="guide-state" data-step="key"></span></div>
+        <p>Cloud models need a key from the company that runs them. <strong>Infero</strong> is the main provider, and is run by HeyElsa, which also makes Local AI. Sign in at <a href="https://console.infero.xyz/login" target="_blank" rel="noopener noreferrer">console.infero.xyz</a>, create a key (it starts with <code>sk-infero-</code>) and paste it into <strong>Settings</strong>. You only need one key to start. Others, such as MiniRouter, OpenRouter, Groq or Together AI, can be added later under <strong>More providers</strong>. Keys are saved in this app’s <code>.env</code> file, readable only by your user account, and never sent to the page.</p>
+      </li>
+      <li>
+        <div class="guide-step-head"><strong>Add MiniRouter or OpenRouter for web search</strong><span class="guide-state" data-step="search"></span></div>
+        <p>Infero can’t search the web. With a MiniRouter or OpenRouter key, questions that need current information are searched there instead, and the line under the message box says so before you send. MiniRouter also makes videos.</p>
+      </li>
+      <li>
+        <div class="guide-step-head"><strong>Run models on this computer</strong><span class="guide-state" data-step="local"></span></div>
+        <p>For answers that never leave this computer, install <a href="https://ollama.com/download" target="_blank" rel="noopener noreferrer">Ollama</a> and open it. Then press the model name next to the send button and choose <strong>Download a local model</strong>. <code>gemma3:4b</code> is about 3.3 GB and can see images.</p>
+      </li>
+      <li>
+        <div class="guide-step-head"><strong>Ask</strong></div>
+        <p>Type your question and press Enter (Shift+Enter adds a new line), or press the microphone and speak. The model name next to the send button chooses who answers.</p>
+      </li>
+    </ol>
+
+    <h3>What you can do</h3>
+    <dl class="guide-list">
+      <dt>Ask, Image, Video</dt><dd>Choose what to make under the message box. Image and Video show an estimated cost before you make anything.</dd>
+      <dt>Attach</dt><dd>Use the paper clip, paste, or drag images and videos in. A video is sent as a few still frames, without sound.</dd>
+      <dt>Web search</dt><dd>The globe turns search on (orange) or off. A model searches only when it needs to.</dd>
+      <dt>Voice</dt><dd>The microphone writes down what you say and asks it. <strong>Read aloud</strong> under an answer reads it back.</dd>
+      <dt>Thinking</dt><dd>Some models share their reasoning. It appears above the answer and folds away when the answer starts.</dd>
+      <dt>Chats</dt><dd>Your chats are listed on the left. Find one by title, delete one, or delete them all.</dd>
+    </dl>
+
+    <h3>Where your messages go</h3>
+    <p>The line under the message box always says where your next message goes, before you send it. “Stays on this computer” means a local model. Anything else names the provider. Some providers, such as MiniRouter and OpenRouter, pass your message on to the company whose model answers. Infero, which is run by HeyElsa, passes it to the host it picks. Groq, Cerebras, Together AI, Fireworks and DeepInfra run the models themselves. Voice goes to the provider chosen in Settings, even when you use a local model.</p>
+
+    <h3>Privacy controls</h3>
+    <dl class="guide-list">
+      <dt>Private mode</dt><dd>In the sidebar. Blocks every cloud request, so only local models answer, and saves nothing new.</dd>
+      <dt>Temporary chat</dt><dd>Not saved or listed. Its files are erased when you leave it.</dd>
+      <dt>Hide personal details</dt><dd>On by default. Email addresses, phone, card and bank numbers and API keys you type are replaced with placeholders before a cloud model sees them, then restored in the answer. Pattern matching can miss things.</dd>
+      <dt>Passcode and lock</dt><dd>Always on. Your passcode encrypts chats and files on disk and is needed to use the app. It locks on restart, when idle, or when you press Lock. A forgotten passcode cannot be recovered.</dd>
+      <dt>Delete automatically</dt><dd>In Settings. Removes chats you haven’t used for 1 to 90 days.</dd>
+    </dl>
+
+    <h3>Costs</h3>
+    <p>Cloud providers charge your account with them, not this app. Each model in the picker shows its price, Image and Video show an estimate first, and your remaining balance appears at the bottom of the sidebar when the provider reports it. Local models are free to run.</p>
+
+    <h3>The legal part</h3>
+    <p>Local AI is open-source software from HeyElsa, released under the MIT License. It is provided as it is, with no warranty of any kind, and HeyElsa and the contributors are not responsible for any loss or problem that comes from using it, including charges from providers, lost data or wrong answers. HeyElsa also runs Infero, the default provider. What you send to Infero goes to HeyElsa under Infero’s own terms and privacy policy, and each other provider you add a key for has its own. By using Local AI you agree to the <button type="button" class="link" data-legal="terms">Terms of use</button>. The <button type="button" class="link" data-legal="privacy">Privacy notice</button> explains what is stored and what leaves this computer.</p>
+
+    <p class="guide-again">You can open this guide again from <strong>How it works</strong> in the sidebar.</p>
+    <div class="guide-actions">
+      <button type="button" id="guide-settings" class="solid">Add a key in Settings</button>
+      <button type="button" id="guide-close" class="quiet">Start using Local AI</button>
+    </div>
+  </dialog>
+
+  <dialog id="legal" aria-labelledby="legal-title">
+    <h2 id="legal-title" class="visually-hidden">Terms, privacy and license</h2>
+    <div class="legal-tabs" role="tablist">
+      <button type="button" role="tab" data-legal-tab="terms">Terms of use</button>
+      <button type="button" role="tab" data-legal-tab="privacy">Privacy notice</button>
+      <button type="button" role="tab" data-legal-tab="license">License</button>
+    </div>
+    <div id="legal-body" class="answer" role="tabpanel"></div>
+    <form method="dialog" class="dialog-end"><button class="solid">Close</button></form>
+  </dialog>
+
+  <dialog id="model-dialog" aria-label="Choose a model">
+    <input id="model-search" type="search" placeholder="Search models" aria-label="Search models">
+    <div id="model-list"></div>
+    <div id="local-setup"></div>
+  </dialog>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <h2 id="settings-title">Settings</h2>
+    <div id="keys"></div>
+    <label for="theme">Appearance</label>
+    <select id="theme">
+      <option value="system">Match system</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+    <label for="image-via">Make images with</label>
+    <select id="image-via"></select>
+    <p class="setting-note">Image mode shows only this provider’s image models. Automatic shows every provider’s.</p>
+    <label for="search-via">Search the web with</label>
+    <select id="search-via"></select>
+    <p class="setting-note">Used when web search is on and your model’s provider can’t search, such as Infero. MiniRouter and OpenRouter models always search with their own provider.</p>
+    <label for="transcribe-via">Write down what you say with</label>
+    <select id="transcribe-via"></select>
+    <label for="speak-via">Read answers aloud with</label>
+    <select id="speak-via"></select>
+    <label for="voice" id="voice-label">Voice for reading answers</label>
+    <select id="voice"></select>
+    <label class="check"><input id="read-back" type="checkbox"> Read answers aloud when I ask by voice</label>
+    <h3>Privacy</h3>
+    <label class="check"><input id="mask-details" type="checkbox"> Hide personal details from cloud models</label>
+    <p class="setting-note">Email addresses, phone numbers, card and bank numbers, US Social Security numbers and API keys you type are replaced before sending and restored in the answer. Pattern matching can miss things, and names, addresses, images and voice are not covered.</p>
+    <label for="retention">Delete chats automatically</label>
+    <select id="retention">
+      <option value="0">Never</option><option value="1">After 1 day</option><option value="7">After 7 days</option>
+      <option value="30">After 30 days</option><option value="90">After 90 days</option>
+    </select>
+    <p id="retention-note" class="setting-note" hidden></p>
+    <button type="button" id="retention-confirm" class="danger-button" hidden></button>
+
+    <h3>Passcode and lock</h3>
+    <p>Chats and files are encrypted on disk, and the app can be used only after you enter your passcode. It locks when it restarts. A forgotten passcode cannot be recovered.</p>
+    <form id="vault-form">
+      <label for="vault-pass">Current passcode, or the passphrase you set before</label>
+      <input id="vault-pass" type="password" autocomplete="current-password" spellcheck="false">
+      <label for="vault-next">New passcode, 4 numbers</label>
+      <input id="vault-next" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" spellcheck="false">
+      <label for="vault-repeat">Repeat new passcode</label>
+      <input id="vault-repeat" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="new-password" spellcheck="false">
+      <p id="vault-note" class="setting-note" role="status"></p>
+      <button type="submit" id="vault-submit" class="solid">Change passcode</button>
+    </form>
+    <div id="auto-lock-row">
+      <label for="auto-lock">Lock automatically</label>
+      <select id="auto-lock">
+        <option value="5">After 5 idle minutes</option><option value="15">After 15 idle minutes</option>
+        <option value="60">After 1 idle hour</option><option value="0">Never</option>
+      </select>
+    </div>
+
+    <h3>Where your data goes</h3>
+    <p>Chats, attachments and generated files stay on this computer, in the app's <code>data</code> folder. Deleting a chat deletes its files. The page itself connects only to the app on this computer. The line under the message box always shows where your next message goes.</p>
+    <p><strong>Private mode</strong> saves nothing new: chats live only in the open page and attachments only in memory, and both are erased when you leave the chat. Your settings and the chats you saved earlier stay.</p>
+    <p><strong>Models on this computer</strong> answer through Ollama, and your messages stay here. Private mode blocks every cloud request in the app's server, including web search, Image, Video and voice input. Read aloud then uses your computer's own voices. Downloading a model contacts Ollama's library, but sends none of your chats.</p>
+    <p><strong>Cloud models</strong> receive your message and attachments through the provider named under the message box. For attached videos, only sampled still frames are sent.</p>
+    <p><strong>Infero</strong>, the main provider, is run by HeyElsa, which also makes Local AI. What you send to Infero models goes to HeyElsa and is covered by Infero’s privacy policy, which says it does not store the content of requests by default and does not train on it. The companies that host its models receive your messages under their own policies. Infero cannot search the web, so with web search on your question goes to MiniRouter or OpenRouter instead, and the line under the message box says so.</p>
+    <p><strong>MiniRouter</strong> keeps prompts and responses in private debug traces for 30 days, with no opt-out. <strong>OpenRouter</strong> and each model's provider have their own policies.</p>
+    <p><strong>Voice outside Private mode</strong> goes to the first provider you have a key for, in the order Infero, MiniRouter, OpenRouter, even with a local model. Recordings are not saved by this app. With a cloud model, read aloud goes there too.</p>
+
+    <h3>Legal</h3>
+    <p>Local AI is open-source software from HeyElsa under the MIT License, provided with no warranty. The app sends nothing to HeyElsa by itself. HeyElsa also runs Infero, the default provider, so what you send to Infero models goes to HeyElsa under Infero’s own terms and privacy policy.</p>
+    <div class="legal-links">
+      <button type="button" class="quiet" data-legal="terms">Terms of use</button>
+      <button type="button" class="quiet" data-legal="privacy">Privacy notice</button>
+      <button type="button" class="quiet" data-legal="license">License</button>
+    </div>
+
+    <h3>Delete everything</h3>
+    <p>Removes every chat, attachment and generated file. Your key and settings stay.</p>
+    <button type="button" id="wipe" class="danger-button">Delete all chats and files</button>
+    <form method="dialog" class="dialog-end"><button class="solid">Close</button></form>
+  </dialog>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

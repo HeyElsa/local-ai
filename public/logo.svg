@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Local AI">
+  <!-- An L, for a model that stays local, and a sparkle beside it for the AI. -->
+  <rect width="32" height="32" fill="#fe7141"/>
+  <path d="M8 7h5v13h11v5H8z" fill="#000"/>
+  <path d="M22 2.5Q23.5 8.5 29.5 10Q23.5 11.5 22 17.5Q20.5 11.5 14.5 10Q20.5 8.5 22 2.5Z" fill="#000"/>
+</svg>
